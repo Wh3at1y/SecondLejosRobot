@@ -1,46 +1,96 @@
 package bot.model;
 
+//-----Imports-----
 import lejos.robotics.chassis.*;
-import lejos.robotics.navigation.DifferentialPilot;
 import lejos.robotics.navigation.MovePilot;
 import lejos.utility.Delay;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.LCD;
 import lejos.hardware.motor.Motor;
-import lejos.hardware.sensor.EV3TouchSensor;
-import lejos.hardware.sensor.EV3UltrasonicSensor;
-import lejos.hardware.sensor.SensorMode;
+import lejos.hardware.sensor.*;
+//--------------------
 
 public class EV3Bot
 	{
+		//-----Declaration Section-----
 		private Chassis baseChassis;
 		private Wheel leftWheel;
 		private Wheel rightWheel;
 		private long waitTime;
 		private float[] ultrasonicSamples;
 		private float[] touchSamples;
-
+		//--------------------
+		
+		//-----Class Declaration-----
 		private MovePilot botPilot;
 		private EV3UltrasonicSensor distanceSensor;
 		private EV3TouchSensor touchSensor;
-
+		//--------------------
+		
+		//-----Constructor-----
 		public EV3Bot()
 			{
-
-				waitTime = 4000;
-				displayMessage("Sam's Dumbot! \nLess go!!!");
+				waitTime = 3000;
+				displayMessage("Sam's Dumbot!");
 				setupWheels();
 				setupSensors();
-				setupSpeed(5000, 5000);
+				setupSpeed(5000, 7000);
 				driveRobot();
+			}
+		//--------------------
+
+		public void driveRobot()
+			{
+
+				while (touchSamples[0] == 0)
+					{
+								displayMessage("Wall = touched.");
+								moveFromDoor();
+								touchSensor.fetchSample(ultrasonicSamples, 0);
+					}
+								botPilot.stop();
+				}
+
+		private void moveFromDoor()
+			{
+				botPilot.travel(4550.00);
+				touchSensor.fetchSample(ultrasonicSamples, 0);
+				rightWheel = WheeledChassis.modelWheel(Motor.B, 60).offset(60);
+				rotateBot("left");
+				displayMessage("Moving down Class");
+				touchSensor.fetchSample(ultrasonicSamples, 0);
+				moveDownClass();
+			}
+
+		private void moveDownClass()
+			{
+				touchSensor.fetchSample(ultrasonicSamples, 0);
+				botPilot.travel(7000.00);
+				touchSensor.fetchSample(ultrasonicSamples, 0);
+				rotateBot("right");
+			}
+
+		private void rotateBot(String direction)
+			{
+				if (direction.equals("left"))
+					botPilot.rotate(-85);
+				else if (direction.equals("right"))
+					botPilot.rotate(85);
+			}
+
+		private void displayMessage(String message)
+			{
+				LCD.drawString(message, 0, 1);
+				Delay.msDelay(waitTime);
+				LCD.clear();
 			}
 
 		private void setupWheels()
 			{
+				leftWheel = WheeledChassis.modelWheel(Motor.A, 60).offset(-60);
+				rightWheel = WheeledChassis.modelWheel(Motor.B, 60).offset(65);
 				baseChassis = new WheeledChassis(new Wheel[]{ leftWheel, rightWheel }, WheeledChassis.TYPE_DIFFERENTIAL);
 				botPilot = new MovePilot(baseChassis);
-				leftWheel = WheeledChassis.modelWheel(Motor.A, 50).offset(-72);
-				rightWheel = WheeledChassis.modelWheel(Motor.B, 50).offset(72);
 			}
 
 		private void setupSensors()
@@ -55,62 +105,5 @@ public class EV3Bot
 		private void setupSpeed(int xSpeed, int ySpeed)
 			{
 				baseChassis.setSpeed(xSpeed, ySpeed);
-			}
-
-		private void driveLong()
-			{
-				botPilot.travel(4550.00);
-				leftWheel = WheeledChassis.modelWheel(Motor.A, 50).offset(-72);
-				botPilot.rotate(-78);
-				botPilot.travel(7000.00);
-				botPilot.rotate(70);
-				botPilot.travel(3400);
-				botPilot.rotate(-85);
-				botPilot.travel(1250);
-			}
-
-		public void driveRobot()
-	{
-		boolean isTouched = false;
-		
-		while(isTouched == false)
-			{
-				if(touchSamples[0] == 0)
-					{
-						botPilot.travel(-50);
-						touchSensor.fetchSample(touchSamples,0);
-						isTouched = false;
-					}
-				else
-					{
-						isTouched = true;
-						moveFromDoor();
-					}
-			}
-	}
-		private void moveFromDoor()
-		{
-			botPilot.travel(4550.00);
-			rotateBot("left");
-		}
-		
-		private void moveDownClass()
-		{
-			
-		}
-		
-		private void rotateBot(String direction)
-		{
-			if(direction.equalsIgnoreCase("left"))
-				botPilot.rotate(-85);
-			else if(direction.equalsIgnoreCase("right"))
-				botPilot.rotate(85);
-		}
-		
-		private void displayMessage(String message)
-			{
-				LCD.drawString(message, 0, 1);
-				Delay.msDelay(waitTime);
-				LCD.clear();
 			}
 	}
